@@ -17,7 +17,7 @@ from baselines.common.atari_wrappers import make_atari
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--env', help='environment ID', default='BreakoutNoFrameskip-v4')
+    parser.add_argument('--env', help='environment ID', default='Breakout')
     parser.add_argument('--seed', help='RNG seed', type=int, default=0)
     parser.add_argument('--prioritized', type=int, default=1)
     parser.add_argument('--dueling', type=int, default=1)
@@ -25,8 +25,9 @@ def main():
     args = parser.parse_args()
     logger.configure()
     set_global_seeds(args.seed)
-    env = make_atari(args.env)
-    # env = bench.Monitor(env, logger.get_dir())
+    env_name = args.env + "NoFrameskip-v4"
+    env = make_atari(env_name)
+    env = bench.Monitor(env, logger.get_dir())
     env = deepq.wrap_atari_dqn(env)
     model = deepq.models.cnn_to_mlp(
         convs=[(32, 8, 4), (64, 4, 2), (64, 3, 1)],
