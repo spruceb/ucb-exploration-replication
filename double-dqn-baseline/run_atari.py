@@ -7,6 +7,7 @@ import numpy as np
 from baselines import deepq
 from baselines.deepq.replay_buffer import ReplayBuffer, PrioritizedReplayBuffer
 from simple import ActWrapper, learn
+import models
 import baselines.common.tf_util as U
 from baselines.common.schedules import LinearSchedule
 from baselines.common import set_global_seeds
@@ -20,7 +21,6 @@ def main():
     parser.add_argument('--env', help='environment ID', default='Breakout')
     parser.add_argument('--seed', help='RNG seed', type=int, default=0)
     parser.add_argument('--prioritized', type=int, default=1)
-    parser.add_argument('--dueling', type=int, default=1)
     parser.add_argument('--num-timesteps', type=int, default=int(10e6))
     args = parser.parse_args()
     logger.configure()
@@ -29,10 +29,9 @@ def main():
     env = make_atari(env_name)
     env = bench.Monitor(env, logger.get_dir())
     env = deepq.wrap_atari_dqn(env)
-    model = deepq.models.cnn_to_mlp(
+    model = models.cnn_to_mlp(
         convs=[(32, 8, 4), (64, 4, 2), (64, 3, 1)],
         hiddens=[256],
-        dueling=bool(args.dueling),
     )
     act = learn(
         env,
