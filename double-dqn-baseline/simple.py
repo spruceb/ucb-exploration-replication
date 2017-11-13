@@ -10,9 +10,8 @@ import gym
 import baselines.common.tf_util as U
 from baselines import logger
 from baselines.common.schedules import LinearSchedule
-from baselines import deepq
 from baselines.deepq.replay_buffer import ReplayBuffer, PrioritizedReplayBuffer
-
+import build_graph
 
 class ActWrapper(object):
     def __init__(self, act, act_params):
@@ -23,7 +22,7 @@ class ActWrapper(object):
     def load(path):
         with open(path, "rb") as f:
             model_data, act_params = cloudpickle.load(f)
-        act = deepq.build_act(**act_params)
+        act = build_graph.build_act(**act_params)
         sess = tf.Session()
         sess.__enter__()
         with tempfile.TemporaryDirectory() as td:
@@ -79,10 +78,14 @@ def load(path):
 def learn(env,
           q_func,
           lr=5e-4,
+          beta1=0.9,
+          beta2=0.999,
+          epsilon=1e-8,
           max_timesteps=100000,
           buffer_size=50000,
           exploration_fraction=0.1,
           exploration_final_eps=0.02,
+          exploration_schedule=None,
           train_freq=1,
           batch_size=32,
           print_freq=100,
@@ -115,6 +118,12 @@ def learn(env,
         and returns a tensor of shape (batch_size, num_actions) with values of every action.
     lr: float
         learning rate for adam optimizer
+    beta1: float
+        beta1 parameter for adam
+    beta2: float
+        beta2 parameter for adam
+    epsilon: float
+        epsilon parameter for adam
     max_timesteps: int
         number of env steps to optimizer for
     buffer_size: int
@@ -123,6 +132,8 @@ def learn(env,
         fraction of entire training period over which the exploration rate is annealed
     exploration_final_eps: float
         final value of random action probability
+    exploration_schedule: Schedule
+        a schedule for exploration chance
     train_freq: int
         update the model every `train_freq` steps.
         set to None to disable printing
@@ -173,11 +184,13 @@ def learn(env,
     def make_obs_ph(name):
         return U.BatchInput(observation_space_shape, name=name)
 
-    act, train, update_target, debug = deepq.build_train(
+    act, train, update_target, debug = build_graph.build_train(
         make_obs_ph=make_obs_ph,
         q_func=q_func,
         num_actions=env.action_space.n,
-        optimizer=tf.train.AdamOptimizer(learning_rate=lr),
+
+        optimizer=tf.train.AdamOptimizer(learning_rate=lr, beta1=beta1,
+                                         beta2=beta2, epsilon=epsilon),
         gamma=gamma,
         grad_norm_clipping=10,
         param_noise=param_noise
@@ -203,9 +216,12 @@ def learn(env,
         replay_buffer = ReplayBuffer(buffer_size)
         beta_schedule = None
     # Create the schedule for exploration starting from 1.
-    exploration = LinearSchedule(schedule_timesteps=int(exploration_fraction * max_timesteps),
-                                 initial_p=1.0,
-                                 final_p=exploration_final_eps)
+    if exploration_schedule is None:
+        exploration = LinearSchedule(schedule_timesteps=int(exploration_fraction * max_timesteps),
+                                     initial_p=1.0,
+                                     final_p=exploration_final_eps)
+    else:
+        exploration = exploration_schedule
 
     # Initialize the parameters and copy them to the target network.
     U.initialize()
