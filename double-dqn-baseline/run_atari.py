@@ -9,7 +9,7 @@ from baselines.deepq.replay_buffer import ReplayBuffer, PrioritizedReplayBuffer
 from simple import ActWrapper, learn
 import models
 import baselines.common.tf_util as U
-from baselines.common.schedules import LinearSchedule
+from baselines.common.schedules import LinearSchedule, PiecewiseSchedule
 from baselines.common import set_global_seeds
 from baselines import bench
 import argparse
@@ -33,6 +33,8 @@ def main():
         convs=[(32, 8, 4), (64, 4, 2), (64, 3, 1)],
         hiddens=[256],
     )
+    exploration_schedule = PiecewiseSchedule(
+        endpoints=[(0, 1), (10e6, 0.1), (5 * 10e6, 0.01)], outside_value=0.01)
     act = learn(
         env,
         q_func=model,
@@ -42,8 +44,7 @@ def main():
         epsilon=1e-4,
         max_timesteps=args.num_timesteps,
         buffer_size=1000000,
-        exploration_fraction=0.1,
-        exploration_final_eps=0.01,
+        exploration_schedule=exploration_schedule,
         train_freq=4,
         print_freq=1,
         batch_size=32,
