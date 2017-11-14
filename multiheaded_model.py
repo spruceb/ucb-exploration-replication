@@ -19,4 +19,4 @@ def multiheaded(input_data, num_actions, scope, reuse=False):
             heads = [layers.fully_connected(head_out, num_outputs=num_actions,
                                             activation_fn=tf.nn.relu)
                      for head_out in heads]
-    return heads
+    return tf.stack(heads)

@@ -150,9 +150,7 @@ def build_act(make_obs_ph, q_func, num_actions, lamda, scope="deepq", reuse=None
         eps = tf.get_variable("eps", (), initializer=tf.constant_initializer(0))
 
         q_values = q_func(observations_ph.get(), num_actions, scope="q_func")
-        heads = len(q_values)
-        stacked_values = tf.stack(q_values)
-        mean, var = tf.nn.moments(stacked_values, 0)
+        mean, var = tf.nn.moments(q_values, 0)
         stdv = tf.sqrt(var)
         values = mean + lamda * stdv
         deterministic_actions = tf.argmax(values, axis=1)
