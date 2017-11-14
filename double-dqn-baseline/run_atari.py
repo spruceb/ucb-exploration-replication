@@ -35,16 +35,20 @@ def main():
     )
     exploration_schedule = PiecewiseSchedule(
         endpoints=[(0, 1), (10e6, 0.1), (5 * 10e6, 0.01)], outside_value=0.01)
+
     act = learn(
         env,
         q_func=model,
-        lr=1e-4,
         beta1=0.9,
         beta2=0.99,
         epsilon=1e-4,
         max_timesteps=args.num_timesteps,
         buffer_size=1000000,
         exploration_schedule=exploration_schedule,
+        start_lr=10e-4,
+        end_lr=5 * 10e-5,
+        start_step=10e6,
+        end_step=5 * 10e6,
         train_freq=4,
         print_freq=1,
         batch_size=32,

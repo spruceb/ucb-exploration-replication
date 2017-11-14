@@ -279,8 +279,10 @@ def build_act_with_param_noise(make_obs_ph, q_func, num_actions, scope="deepq", 
         return act
 
 
-def build_train(make_obs_ph, q_func, num_actions, optimizer, grad_norm_clipping=None, gamma=1.0,
-    double_q=True, scope="deepq", reuse=None, param_noise=False, param_noise_filter_func=None):
+def build_train(make_obs_ph, q_func, num_actions, optimizer,
+                grad_norm_clipping=None, gamma=1.0, double_q=True,
+                scope="deepq", reuse=None, param_noise=False,
+                param_noise_filter_func=None, global_step=None):
     """Creates the train function:
 
     Parameters
@@ -384,7 +386,11 @@ def build_train(make_obs_ph, q_func, num_actions, optimizer, grad_norm_clipping=
                                                 var_list=q_func_vars,
                                                 clip_val=grad_norm_clipping)
         else:
-            optimize_expr = optimizer.minimize(weighted_error, var_list=q_func_vars)
+            if global_step is not None:
+                optimize_expr = optimizer.minimize(
+                    weighted_error, var_list=q_func_vars, global_step=global_step)
+            else:
+                optimize_expr = optimizer.minimize(weighted_error, var_list=q_func_vars)
 
         # update_target_fn will be called periodically to copy Q network to target Q network
         update_target_expr = []

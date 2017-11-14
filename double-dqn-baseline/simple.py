@@ -12,6 +12,8 @@ from baselines import logger
 from baselines.common.schedules import LinearSchedule
 from baselines.deepq.replay_buffer import ReplayBuffer, PrioritizedReplayBuffer
 import build_graph
+from interpolated_learning_rate import interpolated_decay
+
 
 class ActWrapper(object):
     def __init__(self, act, act_params):
@@ -77,7 +79,6 @@ def load(path):
 
 def learn(env,
           q_func,
-          lr=5e-4,
           beta1=0.9,
           beta2=0.999,
           epsilon=1e-8,
@@ -86,6 +87,10 @@ def learn(env,
           exploration_fraction=0.1,
           exploration_final_eps=0.02,
           exploration_schedule=None,
+          start_lr=5e-4,
+          end_lr=5e-4,
+          start_step=0,
+          end_step=1,
           train_freq=1,
           batch_size=32,
           print_freq=100,
@@ -177,13 +182,14 @@ def learn(env,
 
     sess = tf.Session()
     sess.__enter__()
-
     # capture the shape outside the closure so that the env object is not serialized
     # by cloudpickle when serializing make_obs_ph
     observation_space_shape = env.observation_space.shape
     def make_obs_ph(name):
         return U.BatchInput(observation_space_shape, name=name)
 
+    global_step = tf.Variable(0, trainable=False)
+    lr = interpolated_decay(start_lr, end_lr, global_step, start_step, end_step)
     act, train, update_target, debug = build_graph.build_train(
         make_obs_ph=make_obs_ph,
         q_func=q_func,
@@ -193,7 +199,8 @@ def learn(env,
                                          beta2=beta2, epsilon=epsilon),
         gamma=gamma,
         grad_norm_clipping=10,
-        param_noise=param_noise
+        param_noise=param_noise,
+        global_step=global_step
     )
 
     act_params = {
