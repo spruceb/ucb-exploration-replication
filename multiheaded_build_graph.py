@@ -169,8 +169,9 @@ def build_act(make_obs_ph, q_func, num_actions, lamda, scope="deepq", reuse=None
         return act
 
 
-def build_train(make_obs_ph, q_func, num_actions, optimizer, grad_norm_clipping=None, gamma=1.0,
-    double_q=True, scope="deepq", reuse=None, param_noise=False, param_noise_filter_func=None):
+def build_train(make_obs_ph, q_func, num_actions, optimizer, lamda=0.1,
+                grad_norm_clipping=None, gamma=1.0, double_q=True, scope="deepq",
+                reuse=None, param_noise=False, param_noise_filter_func=None):
     """Creates the train function:
 
     Parameters
@@ -224,7 +225,8 @@ def build_train(make_obs_ph, q_func, num_actions, optimizer, grad_norm_clipping=
     debug: {str: function}
         a bunch of functions to print debug data like q_values.
     """
-    act_f = build_act(make_obs_ph, q_func, num_actions, scope=scope, reuse=reuse)
+    act_f = build_act(make_obs_ph, q_func, num_actions, lamda, scope=scope,
+                      reuse=reuse)
 
     with tf.variable_scope(scope, reuse=reuse):
         # set up placeholders
