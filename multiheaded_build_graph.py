@@ -264,8 +264,9 @@ def build_train(make_obs_ph, q_func, num_actions, optimizer, lamda=0.1,
         q_t_selected_target = rew_t_ph + gamma * q_tp1_best_masked
 
         # compute the error (potentially clipped)
-        td_error = q_t_selected - tf.stop_gradient(q_t_selected_target)
-        errors = U.huber_loss(td_error)
+        q_target = tf.stop_gradient(q_t_selected_target)
+        td_error = q_t_selected - q_target
+        errors = tf.losses.mean_squared_error(q_target, q_t_selected) # replaced huber loss b/c paper uses mse
         weighted_error = tf.reduce_mean(importance_weights_ph * errors)
 
         # compute optimization op (potentially with gradient clipping)
