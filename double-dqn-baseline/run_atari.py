@@ -58,7 +58,7 @@ def main():
         start_step=1e6,
         end_step=5 * 1e6,
         train_freq=4,
-        print_freq=1,
+        print_freq=10,
         batch_size=32,
         learning_starts=50000,
         target_network_update_freq=10000,
