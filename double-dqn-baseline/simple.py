@@ -1,5 +1,6 @@
 import os
 import tempfile
+import pathlib
 
 import tensorflow as tf
 import zipfile
@@ -104,7 +105,9 @@ def learn(env,
           prioritized_replay_beta_iters=None,
           prioritized_replay_eps=1e-6,
           param_noise=False,
-          callback=None):
+          callback=None,
+          model_directory=None
+):
     """Train a deepq model.
 
     Parameters
@@ -240,7 +243,9 @@ def learn(env,
     reset = True
     with tempfile.TemporaryDirectory() as td:
         model_saved = False
-        model_file = os.path.join(td, "model")
+        if model_directory is None:
+            model_directory = pathlib.Path(td)
+        model_file = model_directory / "model"
         for t in range(max_timesteps):
             if callback is not None:
                 if callback(locals(), globals()):
@@ -311,6 +316,7 @@ def learn(env,
                         logger.log("Saving model due to mean reward increase: {} -> {}".format(
                                    saved_mean_reward, mean_100ep_reward))
                     U.save_state(model_file)
+                    act.save(str(model_directory / "act_model.pkl"))
                     model_saved = True
                     saved_mean_reward = mean_100ep_reward
         if model_saved:

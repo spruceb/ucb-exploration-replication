@@ -3,6 +3,7 @@ import tensorflow as tf
 import zipfile
 import cloudpickle
 import numpy as np
+from pathlib import Path
 
 from baselines import deepq
 from baselines.deepq.replay_buffer import ReplayBuffer, PrioritizedReplayBuffer
@@ -24,8 +25,13 @@ def main():
     parser.add_argument('--num-timesteps', type=int, default=int(10e6))
     parser.add_argument('experiment_id')
     args = parser.parse_args()
-    logger.configure('./{}--{}'.format(args.experiment_id, args.env),
-                     ['stdout', 'tensorboard', 'json'])
+    logging_directory = Path('./experiments/{}--{}'.format(args.experiment_id, args.env))
+    if not logging_directory.exists():
+        logging_directory.mkdir(parents=True)
+    logger.configure(str(logging_directory), ['stdout', 'tensorboard', 'json'])
+    model_directory = logging_directory / 'models'
+    if not model_directory.exists():
+        model_directory.mkdir(parents=True)
     set_global_seeds(args.seed)
     env_name = args.env + "NoFrameskip-v4"
     env = make_atari(env_name)
@@ -58,8 +64,9 @@ def main():
         target_network_update_freq=10000,
         gamma=0.99,
         prioritized_replay=bool(args.prioritized),
+        model_directory=model_directory
     )
-    # act.save("pong_model.pkl") XXX
+    act.save(str(model_directory / "act_model.pkl"))
     env.close()
 
 
