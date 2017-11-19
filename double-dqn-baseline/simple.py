@@ -245,7 +245,7 @@ def learn(env,
         model_saved = False
         if model_directory is None:
             model_directory = pathlib.Path(td)
-        model_file = model_directory / "model"
+        model_file = str(model_directory / "model")
         for t in range(max_timesteps):
             if callback is not None:
                 if callback(locals(), globals()):
