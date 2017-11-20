@@ -266,8 +266,8 @@ def build_train(make_obs_ph, q_func, num_actions, optimizer, lamda=0.1,
         # compute the error (potentially clipped)
         q_target = tf.stop_gradient(q_t_selected_target)
         td_error = q_t_selected - q_target
-        errors = tf.reduce_mean(td_error ** 2, axis = 1) # mse
-        weighted_error = tf.reduce_mean(importance_weights_ph * errors)
+        errors = U.huber_loss(td_error)
+        weighted_error = tf.reduce_mean(importance_weights_ph * errors, axis=1)
 
         # compute optimization op (potentially with gradient clipping)
         if grad_norm_clipping is not None:
