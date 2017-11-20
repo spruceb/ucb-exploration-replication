@@ -12,6 +12,7 @@ from baselines import logger
 from baselines.common.schedules import LinearSchedule
 from baselines.deepq.replay_buffer import ReplayBuffer, PrioritizedReplayBuffer
 import multiheaded_build_graph
+from interpolated_learning_rate import interpolated_decay
 
 class ActWrapper(object):
     def __init__(self, act, act_params):
@@ -77,7 +78,6 @@ def load(path):
 
 def learn(env,
           q_func,
-          lr=5e-4,
           beta1=0.9,
           beta2=0.999,
           epsilon=1e-8,
@@ -86,6 +86,10 @@ def learn(env,
           exploration_fraction=0.1,
           exploration_final_eps=0.02,
           exploration_schedule=None,
+          start_lr=5e-4,
+          end_lr=5e-4,
+          start_step=0,
+          end_step=1,
           train_freq=1,
           batch_size=32,
           print_freq=100,
@@ -99,7 +103,9 @@ def learn(env,
           prioritized_replay_beta_iters=None,
           prioritized_replay_eps=1e-6,
           param_noise=False,
-          callback=None):
+          callback=None,
+          model_directory=None
+):
     """Train a deepq model.
 
     Parameters
@@ -184,6 +190,8 @@ def learn(env,
     def make_obs_ph(name):
         return U.BatchInput(observation_space_shape, name=name)
 
+    global_step = tf.Variable(0, trainable=False)
+    lr = interpolated_decay(start_lr, end_lr, global_step, start_step, end_step)
     act, train, update_target, debug = multiheaded_build_graph.build_train(
         make_obs_ph=make_obs_ph,
         q_func=q_func,
@@ -194,7 +202,7 @@ def learn(env,
         gamma=gamma,
         grad_norm_clipping=10,
         param_noise=param_noise,
-        double_q=False
+        global_step=global_step
     )
     tf.summary.FileWriter('./tensorlogs', graph_def=sess.graph_def)
 
@@ -235,7 +243,9 @@ def learn(env,
     reset = True
     with tempfile.TemporaryDirectory() as td:
         model_saved = False
-        model_file = os.path.join(td, "model")
+        if model_directory is None:
+            model_directory = pathlib.Path(td)
+        model_file = str(model_directory / "model")
         for t in range(max_timesteps):
             if callback is not None:
                 if callback(locals(), globals()):
@@ -306,6 +316,7 @@ def learn(env,
                         logger.log("Saving model due to mean reward increase: {} -> {}".format(
                                    saved_mean_reward, mean_100ep_reward))
                     U.save_state(model_file)
+                    act.save(str(model_directory / "act_model.pkl"))
                     model_saved = True
                     saved_mean_reward = mean_100ep_reward
         if model_saved:
