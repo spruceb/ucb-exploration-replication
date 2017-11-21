@@ -171,7 +171,7 @@ def build_act(make_obs_ph, q_func, num_actions, lamda, scope="deepq", reuse=None
 
 
 def build_train(make_obs_ph, q_func, num_actions, optimizer, lamda=0.1,
-                grad_norm_clipping=None, gamma=1.0, double_q=True, scope="deepq",
+                grad_norm_clipping=None, gamma=1.0, double_q=False, scope="deepq",
                 reuse=None, param_noise=False, param_noise_filter_func=None, 
                 global_step=None):
     """Creates the train function:
@@ -256,7 +256,7 @@ def build_train(make_obs_ph, q_func, num_actions, optimizer, lamda=0.1,
         if double_q:
             q_tp1_using_online_net = q_func(obs_tp1_input.get(), num_actions, scope="q_func", reuse=True)
             q_tp1_best_using_online_net = tf.arg_max(q_tp1_using_online_net, 2)
-            q_tp1_best = tf.reduce_sum(q_tp1 * tf.one_hot(q_tp1_best_using_online_net, num_actions), 1)
+            q_tp1_best = tf.reduce_sum(q_tp1 * tf.one_hot(q_tp1_best_using_online_net, num_actions), 2)
         else:
             q_tp1_best = tf.reduce_max(q_tp1, 2)
         q_tp1_best_masked = (1.0 - done_mask_ph) * q_tp1_best
