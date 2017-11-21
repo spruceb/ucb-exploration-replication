@@ -204,7 +204,7 @@ def learn(env,
         param_noise=param_noise,
         global_step=global_step
     )
-    tf.summary.FileWriter('./tensorlogs', graph_def=sess.graph_def)
+    tf.summary.FileWriter(logger.get_dir(), graph_def=sess.graph_def)
 
     act_params = {
         'make_obs_ph': make_obs_ph,
