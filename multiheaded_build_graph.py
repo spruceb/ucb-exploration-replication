@@ -172,7 +172,7 @@ def build_act(make_obs_ph, q_func, num_actions, lamda, scope="deepq", reuse=None
 
 def build_train(make_obs_ph, q_func, num_actions, optimizer, lamda=0.1,
                 grad_norm_clipping=None, gamma=1.0, double_q=False, scope="deepq",
-                reuse=None, param_noise=False, param_noise_filter_func=None, 
+                reuse=None, param_noise=False, param_noise_filter_func=None,
                 global_step=None):
     """Creates the train function:
 

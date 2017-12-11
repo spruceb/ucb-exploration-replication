@@ -23,6 +23,7 @@ def main():
     parser.add_argument('--seed', help='RNG seed', type=int, default=0)
     parser.add_argument('--prioritized', type=int, default=0)
     parser.add_argument('--num-timesteps', type=int, default=int(10e6))
+    parser.add_argument('--lamda', type=float, default=0.1)
     parser.add_argument('experiment_id')
     args = parser.parse_args()
     logging_directory = Path('./experiments/{}--{}'.format(args.experiment_id, args.env))
@@ -60,7 +61,8 @@ def main():
         target_network_update_freq=10000,
         gamma=0.99,
         prioritized_replay=bool(args.prioritized),
-        model_directory=model_directory
+        model_directory=model_directory,
+        lamda=args.lamda
     )
     act.save(str(model_directory / "act_model.pkl"))
     env.close()
