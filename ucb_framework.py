@@ -104,7 +104,8 @@ def learn(env,
           prioritized_replay_eps=1e-6,
           param_noise=False,
           callback=None,
-          model_directory=None
+          model_directory=None,
+          lamda=0.1
 ):
     """Train a deepq model.
 
@@ -202,7 +203,8 @@ def learn(env,
         gamma=gamma,
         grad_norm_clipping=10,
         param_noise=param_noise,
-        global_step=global_step
+        global_step=global_step,
+        lamda=lamda,
     )
     tf.summary.FileWriter(logger.get_dir(), graph_def=sess.graph_def)
 
